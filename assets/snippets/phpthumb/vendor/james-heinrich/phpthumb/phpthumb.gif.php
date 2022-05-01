@@ -915,7 +915,7 @@ class CGIF
 							$bmp .= chr($bgColor);
 						}
 					} else {
-						$bmp .= $data{$nPxl};
+						$bmp .= $data[$nPxl];
 					}
 				} else {
 					// BACKGROUND
@@ -1007,7 +1007,7 @@ class CGIF
 					($x <  ($this->m_img->m_gih->m_nLeft + $this->m_img->m_gih->m_nWidth)) &&
 					($y <  ($this->m_img->m_gih->m_nTop  + $this->m_img->m_gih->m_nHeight))) {
 					// PART OF IMAGE
-					$bmp .= $data{$nPxl};
+					$bmp .= $data[$nPxl];
 				} else {
 					// BACKGROUND
 					if ($bgColor == -1) {
@@ -1093,9 +1093,9 @@ class CGIF
 		for ($i = 0; $i < $NumColorsInPal; $i++) {
 			$ThisImageColor[$i] = imagecolorallocate(
 									$PlottingIMG,
-									ord($pal[($i * 3) + 0]),
-									ord($pal[($i * 3) + 1]),
-									ord($pal[($i * 3) + 2]));
+									ord($pal{($i * 3) + 0}),
+									ord($pal{($i * 3) + 1}),
+									ord($pal{($i * 3) + 2}));
 		}
 
 		// PREPARE BITMAP BITS

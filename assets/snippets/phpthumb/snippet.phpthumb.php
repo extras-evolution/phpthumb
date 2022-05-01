@@ -1,31 +1,4 @@
 <?php
-/**
- * phpthumb
- *
- * PHPThumb creates thumbnails and altered images on the fly and caches them
- *
- * @category    snippet
- * @version    1.3.3
- * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License (GPL)
- * @internal    @properties
- * @internal    @modx_category Content
- * @internal    @installset base, sample
- * @documentation Usage: [[phpthumb? &input=`[+image+]` &options=`w=150,h=76,far=C,bg=FFFFFF`]]
- * @documentation phpThumb docs http://phpthumb.sourceforge.net/demo/docs/phpthumb.readme.txt
- * @reportissues https://github.com/modxcms/evolution
- * @link        noimage.png here [+site_url+]assets/snippets/phpthumb/noimage.png
- * @author      Bumkaka
- * @author      Many contributors since then
- * @lastupdate  26/11/2018
- */
-
-
-/**
- * if $webp = 1 use webp for images
- * if $filemtime = 1 check filemtime in md5-cache file
- **/
-
-
 use WebPConvert\WebPConvert;
 
 if (!defined('MODX_BASE_PATH')) {
@@ -76,9 +49,6 @@ $ext = strtolower($path_parts['extension']);
 $options = 'f=' . (in_array($ext, array('png', 'gif', 'jpeg')) ? $ext : 'jpg&q=85') . '&' .
     strtr($options, array(',' => '&', '_' => '=', '{' => '[', '}' => ']'));
 
-
-
-
 parse_str($options, $params);
 foreach ($tmpImagesFolder as $folder) {
     if (!empty($folder)) {
@@ -90,24 +60,20 @@ foreach ($tmpImagesFolder as $folder) {
     }
 }
 
-$fmtime = '';
-if(isset($filemtime)){
-    $fmtime = filemtime(MODX_BASE_PATH . $input);
-}
-
 $fNamePref = rtrim($cacheFolder, '/') . '/';
 $fName = $path_parts['filename'];
 $fNameSuf = '-' .
     (isset($params['w']) ? $params['w'] : '') . 'x' . (isset($params['h']) ? $params['h'] : '') . '-' .
-    substr(md5(serialize($params) . $fmtime), 0, 3) .
+    substr(md5(serialize($params) . filemtime(MODX_BASE_PATH . $input)), 0, 3) .
     '.' . $params['f'];
 
-$fNameSuf = str_replace("ad", "at", $fNameSuf);
+if (isset($adBlockFix) && $adBlockFix === '1')
+    $fNameSuf = str_replace('ad', 'at', $fNameSuf);
 
 $outputFilename = MODX_BASE_PATH . $fNamePref . $fName . $fNameSuf;
 if (!file_exists($outputFilename)) {
     if (!class_exists('phpthumb')) {
-        require_once MODX_BASE_PATH . $phpThumbPath . '/phpthumb.class.php';
+        require_once MODX_BASE_PATH . $phpThumbPath . '/vendor/autoload.php';
     }
     $phpThumb = new phpthumb();
     $phpThumb->config_cache_directory = MODX_BASE_PATH . $defaultCacheFolder;
@@ -125,15 +91,14 @@ if (!file_exists($outputFilename)) {
 }
 
 if (isset($webp) && class_exists('\WebPConvert\WebPConvert')) {
-     if( isset( $_SERVER['HTTP_ACCEPT'] ) && strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) !== false && pathinfo($outputFilename, PATHINFO_EXTENSION) != 'gif') {
+    if( isset( $_SERVER['HTTP_ACCEPT'] ) && strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) !== false && pathinfo($outputFilename, PATHINFO_EXTENSION) != 'gif') {
         if (file_exists($outputFilename . '.webp')) {
             $fNameSuf .= '.webp';
         } else {
-            WebPConvert::convert($outputFilename, $outputFilename . '.webp');
+            WebPConvert::convert($outputFilename, $outputFilename . '.webp', ['quality' => 90]);
             $fNameSuf .= '.webp';
         }
     }
 }
 
 return $fNamePref . rawurlencode($fName) . $fNameSuf;
-
